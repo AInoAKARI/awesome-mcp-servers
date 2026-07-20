@@ -1,0 +1,39 @@
+name: Add Keymaster MCP once
+
+on:
+  push:
+    branches: [sol/add-keymaster-mcp-clean]
+    paths: [.github/workflows/add-keymaster-mcp-once.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: sol/add-keymaster-mcp-clean
+      - name: Insert Security entry and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('README.md')
+          text = path.read_text(encoding='utf-8')
+          entry = '- [AInoAKARI/keymaster-mcp](https://github.com/AInoAKARI/keymaster-mcp) 📇 🏠 ☁️ 🍎 🪟 🐧 - Read-only HashiCorp Vault secret retrieval for autonomous AI agents. Secrets are fetched at runtime instead of being stored in `.env` files or prompts. Install via `npx -y @akari-os/keymaster-mcp`.'
+          if entry not in text:
+              marker = '### 🔒 <a name="security"></a>Security'
+              start = text.index(marker)
+              position = text.index('\n- [', start) + 1
+              text = text[:position] + entry + '\n' + text[position:]
+              path.write_text(text, encoding='utf-8')
+          PY
+          rm .github/workflows/add-keymaster-mcp-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md .github/workflows/add-keymaster-mcp-once.yml
+          git commit -m "Add Keymaster MCP server"
+          git push origin HEAD:sol/add-keymaster-mcp-clean
